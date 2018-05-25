@@ -18,12 +18,14 @@ package com.comcast.money.core
 
 import com.comcast.money.api.SpanId
 import org.scalatest.{ Matchers, WordSpec }
+import Formatters.StringHexHelpers
 
 class FormattersSpec extends WordSpec with Matchers {
 
   private val expectedTraceId = "a"
-  private val expectedParentSpanId = "1"
-  private val expectedSpanId = "2"
+  private val expectedTraceIdHex = "61"
+  private val expectedParentSpanId = 1
+  private val expectedSpanId = 2
   "Http Formatting" should {
     "convert from a money  http header" in {
       val spanId = new SpanId()
@@ -31,25 +33,37 @@ class FormattersSpec extends WordSpec with Matchers {
       Formatters.fromHttpHeader(test).get shouldBe spanId
     }
 
-    "convert from all X-B3  http headers" in {
+    "convert from all X-B3 http headers" in {
       val expectedLongTraceid = "a" * 32
+      val expectedLongTraceidHex = "61" * 32
       val expectedMaxParentSpanIdVal = Long.MaxValue
       val expectedMinSpanIdVal = Long.MinValue
-      val actualSpanId = Formatters.fromB3HttpHeaders(expectedLongTraceid, Option(expectedMaxParentSpanIdVal.toString),Option(expectedMinSpanIdVal.toString)).get
+
+      val actualSpanId = Formatters.fromB3HttpHeaders(expectedLongTraceidHex, Option(expectedMaxParentSpanIdVal.toHexString), Option(expectedMinSpanIdVal.toHexString)).get
       actualSpanId.traceId shouldBe expectedLongTraceid
-      actualSpanId.parentId shouldBe expectedMaxParentSpanIdVal.toLong
-      actualSpanId.selfId() shouldBe expectedMinSpanIdVal.toLong
+      actualSpanId.parentId shouldBe expectedMaxParentSpanIdVal
+      actualSpanId.selfId() shouldBe expectedMinSpanIdVal
     }
 
-    "convert from 2 X-B3  http headers" in {
-      val actualSpanId = Formatters.fromB3HttpHeaders(expectedTraceId, Option(expectedParentSpanId), None).get
+    "convert from 2 X-B3 http headers" in {
+      val actualSpanId = Formatters.fromB3HttpHeaders(expectedTraceIdHex, Option(expectedParentSpanId.toHexString), None).get
       actualSpanId.traceId shouldBe expectedTraceId
       actualSpanId.parentId shouldBe expectedParentSpanId.toLong
     }
 
-    "convert from " + expectedParentSpanId + " X-B3  http header" in {
-      val actualSpanId = Formatters.fromB3HttpHeaders(expectedTraceId,None, None).get
+    "convert from 1 X-B3 http header" in {
+      val actualSpanId = Formatters.fromB3HttpHeaders(expectedTraceIdHex, None, None).get
       actualSpanId.traceId shouldBe expectedTraceId
     }
+
+    "convert to x-b3 headers" in {
+      val spanId = new SpanId(expectedTraceId, expectedParentSpanId, expectedSpanId)
+      Formatters.toB3Headers(spanId)(
+        _ shouldBe expectedTraceId.toHexString,
+        _ shouldBe expectedParentSpanId.toHexString,
+        _ shouldBe expectedSpanId.toHexString
+      )
+    }
   }
+
 }

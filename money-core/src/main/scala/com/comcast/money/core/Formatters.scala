@@ -21,6 +21,11 @@ import com.comcast.money.api.SpanId
 import scala.util.Try
 
 object Formatters {
+  implicit class StringHexHelpers(s: String) {
+    def toHexString: String = s.toList.map(_.toInt.toHexString).mkString
+    def fromHexString: String = s.sliding(2, 2).toArray.map(Integer.parseUnsignedInt(_, 16).toChar).mkString
+    def fromHexStringToLong: Long = Long2long(java.lang.Long.parseUnsignedLong(s, 16))
+  }
 
   private[core] val HttpHeaderFormat = "trace-id=%s;parent-id=%s;span-id=%s"
 
@@ -33,14 +38,19 @@ object Formatters {
     new SpanId(traceId, parentId.toLong, selfId.toLong)
   }
 
-  def toHttpHeader(spanId: SpanId): String =
-    HttpHeaderFormat.format(spanId.traceId, spanId.parentId, spanId.selfId)
+  def toHttpHeader(spanId: SpanId): String = HttpHeaderFormat.format(spanId.traceId, spanId.parentId, spanId.selfId)
 
   def fromB3HttpHeaders(traceId: String, maybeParentSpanId: Option[String], maybeSpanId: Option[String]) = Try {
     (maybeParentSpanId, maybeSpanId) match {
-      case (Some(ps), Some(s)) => new SpanId(traceId, ps.toLong, s.toLong)
-      case (Some(ps), _) => new SpanId(traceId, ps.toLong)
-      case _ => new SpanId(traceId)
+      case (Some(ps), Some(s)) => new SpanId(traceId.fromHexString, ps.fromHexStringToLong, s.fromHexStringToLong)
+      case (Some(ps), _) => new SpanId(traceId.fromHexString, ps.fromHexStringToLong)
+      case _ => new SpanId(traceId.fromHexString)
     }
+  }
+
+  def toB3Headers(spanId: SpanId)(ft: String => Unit, fps: String => Unit, fs: String => Unit): Unit = {
+    ft(spanId.traceId().toHexString)
+    fps(spanId.parentId().toHexString)
+    fs(spanId.selfId().toHexString)
   }
 }
