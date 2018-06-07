@@ -68,8 +68,8 @@ class TraceFriendlyHttpClientSpec extends WordSpec with SpecHelpers
     verify(underTest.tracer).stopTimer(HttpTraceConfig.HttpResponseTimeTraceKey)
     verify(underTest.tracer).record("http-response-code", 200L)
     verify(httpUriRequest).setHeader("X-MoneyTrace", CoreSpanId.toHttpHeader(spanId))
-    //    verify(httpUriRequest).setHeader("X-B3-TraceId", spanId.traceId())
-    verify(httpUriRequest).setHeader("X-B3-ParentSpanId", spanId.parentId().toHexString)
+    verify(httpUriRequest).setHeader("X-B3-TraceId", spanId.traceId.replace("-", ""))
+    //    verify(httpUriRequest).setHeader("X-B3-ParentSpanId", spanId.parentId().t oHexString) // Does not get set because this is a root span
     verify(httpUriRequest).setHeader("X-B3-SpanId", spanId.selfId().toHexString)
   }
 

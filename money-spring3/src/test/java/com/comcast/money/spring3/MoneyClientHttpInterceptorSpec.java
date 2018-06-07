@@ -75,7 +75,7 @@ public class MoneyClientHttpInterceptorSpec {
         moneyClientHttpRequestInterceptor.intercept(httpRequest,"abc".getBytes(), clientHttpRequestExecution);
         verify(httpRequest).getHeaders();
         Assert.assertEquals(4,httpHeaders.size());
-        Assert.assertEquals(Formatters.StringHexHelpers(expectedTraceId).toHexString(), httpHeaders.get("X-B3-TraceId").get(0));
+        Assert.assertEquals(Formatters.StringHexHelpers(expectedTraceId).fromGuid(), httpHeaders.get("X-B3-TraceId").get(0));
         Assert.assertEquals(expectedParentSpanId.toString(), httpHeaders.get("X-B3-ParentSpanId").get(0));
         Assert.assertEquals(expectedSpanId.toString(), httpHeaders.get("X-B3-SpanId").get(0));
         Assert.assertEquals(expectedMoneyHeaderVal, httpHeaders.get("X-MoneyTrace").get(0));

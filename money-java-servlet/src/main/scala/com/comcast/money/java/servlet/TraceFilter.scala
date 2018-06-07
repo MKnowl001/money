@@ -82,6 +82,7 @@ class TraceFilter extends Filter {
     def parseHeaders(traceIdVal: String): Option[SpanId] = {
       val maybeB3ParentSpanId = Option(httpRequest.getHeader(B3ParentSpanId))
       val maybeB3SpanId = Option(httpRequest.getHeader(B3SpanId))
+      logger.info("HERE " + traceIdVal + " " + maybeB3ParentSpanId + " " + maybeB3SpanId)
       fromB3HttpHeaders(traceIdVal, maybeB3ParentSpanId, maybeB3SpanId) match {
         case Success(spanId) => Some(spanId)
         case Failure(ex) =>
